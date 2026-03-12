@@ -1,0 +1,19 @@
+# API keys — never push this
+.env
+
+# ChromaDB database — too large for GitHub
+chroma_db/
+
+# Python junk
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Virtual environment
+venv/
+env/
+
+# OS junk
+.DS_Store
+Thumbs.db
