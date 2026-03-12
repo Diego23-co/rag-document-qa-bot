@@ -4,17 +4,15 @@ from sentence_transformers import SentenceTransformer  # local embedding model (
 import os               # for file and folder operations
 import sys              # for reading command line arguments
 
-# ============================================================
 # CONFIG — tweak these values to change behaviour
-# ============================================================
+
 CHUNK_SIZE = 500        # how many characters per chunk (bigger = more context, less precise)
 CHUNK_OVERLAP = 50      # how many characters overlap between chunks (helps preserve context at boundaries)
 COLLECTION_NAME = "documents"   # name of the ChromaDB collection (like a table name)
 DOCS_FOLDER = "./docs"          # default folder to look for PDFs when no argument is passed
 
-# ============================================================
+
 # SETUP — load model and connect to database (runs once)
-# ============================================================
 
 # Load the local sentence embedding model
 # This converts text → numerical vectors so we can do similarity search
@@ -31,9 +29,8 @@ client = chromadb.PersistentClient(path="./chroma_db")
 collection = client.get_or_create_collection(COLLECTION_NAME)
 
 
-# ============================================================
 # STEP 1 — EXTRACT: pull raw text out of a PDF
-# ============================================================
+
 def extract_text_from_pdf(pdf_path: str) -> str:
     """
     Opens a PDF and extracts all text from every page.
@@ -48,9 +45,8 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     return text
 
 
-# ============================================================
 # STEP 2 — CHUNK: split text into smaller overlapping pieces
-# ============================================================
+
 def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
     """
     Splits a long text into smaller chunks with slight overlap.
@@ -72,9 +68,8 @@ def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVE
     return chunks
 
 
-# ============================================================
 # CORE FUNCTION — ingest a single PDF file
-# ============================================================
+
 def ingest_pdf(pdf_path: str):
     """
     Full ingestion pipeline for one PDF:
@@ -125,9 +120,8 @@ def ingest_pdf(pdf_path: str):
     print(f"     ✅ Stored {len(chunks)} chunks")
 
 
-# ============================================================
 # BATCH FUNCTION — ingest all PDFs in a folder
-# ============================================================
+
 def ingest_folder(folder_path: str):
     """
     Finds all PDF files in a folder and ingests them one by one.
@@ -168,9 +162,8 @@ def ingest_folder(folder_path: str):
     print(f"\nYou can now run: python chat.py")
 
 
-# ============================================================
 # UTILITY — list all documents currently stored in ChromaDB
-# ============================================================
+
 def list_ingested():
     """
     Shows all documents currently stored in ChromaDB and how many chunks each has.
@@ -192,9 +185,8 @@ def list_ingested():
         print(f"   • {source} ({count} chunks)")
 
 
-# ============================================================
 # ENTRY POINT — handles command line arguments
-# ============================================================
+
 if __name__ == "__main__":
     if len(sys.argv) == 2:
         if sys.argv[1] == "--list":
