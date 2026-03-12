@@ -1,6 +1,3 @@
-# app.py — Streamlit web UI for the RAG Document Q&A Bot
-# Run with: streamlit run app.py
-
 import streamlit as st
 import chromadb
 from sentence_transformers import SentenceTransformer
@@ -12,27 +9,25 @@ import tempfile
 
 load_dotenv()
 
-# ============================================================
+
 # CONFIG
-# ============================================================
+
 COLLECTION_NAME = "documents"
 TOP_K = 3
 MODEL = "llama-3.1-8b-instant"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 
-# ============================================================
 # PAGE SETUP
-# ============================================================
+
 st.set_page_config(
     page_title="NeuralDocs — RAG Q&A",
     page_icon="⚡",
     layout="wide"
 )
 
-# ============================================================
 # CUSTOM STYLING
-# ============================================================
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -391,9 +386,8 @@ textarea::placeholder {
 """, unsafe_allow_html=True)
 
 
-# ============================================================
 # CACHED RESOURCES
-# ============================================================
+
 @st.cache_resource
 def load_embedder():
     return SentenceTransformer("all-MiniLM-L6-v2")
@@ -405,16 +399,25 @@ def load_db():
 
 @st.cache_resource
 def load_groq():
-    return Groq(api_key=os.getenv("GROQ_API_KEY"))
+    # Try Streamlit Cloud secrets first (for deployment)
+    # Fall back to .env file for local development
+    try:
+        api_key = st.secrets.get("GROQ_API_KEY")
+    except Exception:
+        api_key = None
+    if not api_key:
+        api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        st.error("GROQ_API_KEY not found. Add it to your .env file or Streamlit Cloud secrets.")
+        st.stop()
+    return Groq(api_key=api_key)
 
 embedder = load_embedder()
 collection = load_db()
 groq_client = load_groq()
 
-
-# ============================================================
 # INGESTION HELPERS
-# ============================================================
+
 def extract_text(pdf_path):
     text = ""
     with pdfplumber.open(pdf_path) as pdf:
@@ -458,9 +461,8 @@ def ingest_pdf_bytes(file_bytes, filename):
         os.unlink(tmp_path)
 
 
-# ============================================================
 # RAG QUERY
-# ============================================================
+
 # Rotating thinking messages — makes the bot feel alive while it processes
 THINKING_MESSAGES = [
     "🔍 Scanning your documents...",
@@ -514,10 +516,8 @@ DOCUMENT CONTEXT (use as reference only — do NOT copy this text directly):
     )
     return stream, sources
 
-
-# ============================================================
 # SESSION STATE
-# ============================================================
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -537,10 +537,8 @@ if "ingested_files" not in st.session_state:
     else:
         st.session_state.ingested_files = {}
 
-
-# ============================================================
 # SIDEBAR
-# ============================================================
+
 with st.sidebar:
     st.markdown('<div class="sidebar-logo">⚡ NeuralDocs</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-tagline">RAG-Powered Document Intelligence</div>', unsafe_allow_html=True)
@@ -614,10 +612,8 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-
-# ============================================================
 # MAIN CONTENT
-# ============================================================
+
 st.markdown('<div class="main-wrapper">', unsafe_allow_html=True)
 
 # Hero
@@ -687,9 +683,8 @@ else:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ============================================================
 # CHAT INPUT
-# ============================================================
+
 import random
 
 # Disable the input field while the bot is streaming a response
