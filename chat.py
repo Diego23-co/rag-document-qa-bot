@@ -5,20 +5,15 @@ from dotenv import load_dotenv     # loads environment variables from .env file
 import os                          # for reading environment variables
 
 # Load API key from .env file
-# This keeps your key out of the code so you don't accidentally share it
 load_dotenv()
 
-# ============================================================
 # CONFIG
-# ============================================================
 COLLECTION_NAME = "documents"       # must match the collection name used in ingest.py
 TOP_K = 3                           # how many chunks to retrieve per query
                                     # higher = more context, but also more tokens sent to LLM
 MODEL = "llama-3.1-8b-instant"      # free Groq model — fast and capable enough for Q&A
 
-# ============================================================
 # SETUP — load model and connect to database (runs once)
-# ============================================================
 
 # Load the same embedding model used during ingestion
 # IMPORTANT: must be the same model — different models produce incompatible vectors
@@ -32,17 +27,15 @@ collection = client.get_or_create_collection(COLLECTION_NAME)
 # Connect to Groq using your API key from the .env file
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# ============================================================
 # CONVERSATION HISTORY
-# ============================================================
+
 # Stores the full conversation so the LLM remembers previous messages
 # Format: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
 conversation_history = []
 
 
-# ============================================================
 # STEP 1 — RETRIEVE: find the most relevant chunks for a query
-# ============================================================
+
 def retrieve_context(query: str, top_k: int = TOP_K) -> tuple[str, list[str]]:
     """
     Embeds the user's question and searches ChromaDB for the most
@@ -75,9 +68,8 @@ def retrieve_context(query: str, top_k: int = TOP_K) -> tuple[str, list[str]]:
     return context, sources
 
 
-# ============================================================
 # STEP 2 — ANSWER: send context + question to the LLM
-# ============================================================
+
 def ask(user_question: str) -> tuple[str, list[str]]:
     """
     Full RAG query pipeline:
@@ -121,9 +113,8 @@ DOCUMENT CONTEXT:
     return answer, sources
 
 
-# ============================================================
 # MAIN CHAT LOOP
-# ============================================================
+
 def main():
     print("\n🤖 RAG Document Q&A Bot")
     print("=" * 40)
