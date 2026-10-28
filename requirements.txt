@@ -1,6 +1,8 @@
 groq
 chromadb
-sentence-transformers
 pdfplumber
 streamlit
 python-dotenv
+fastapi
+uvicorn[standard]
+python-multipart

@@ -1,6 +1,6 @@
 import streamlit as st
 import chromadb
-from sentence_transformers import SentenceTransformer
+from embeddings import Embedder
 from groq import Groq
 from dotenv import load_dotenv
 import pdfplumber
@@ -14,7 +14,7 @@ load_dotenv()
 
 COLLECTION_NAME = "documents"
 TOP_K = 3
-MODEL = "llama-3.1-8b-instant"
+MODEL = "openai/gpt-oss-20b"
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 
@@ -390,7 +390,7 @@ textarea::placeholder {
 
 @st.cache_resource
 def load_embedder():
-    return SentenceTransformer("all-MiniLM-L6-v2")
+    return Embedder()
 
 @st.cache_resource
 def load_db():
@@ -618,7 +618,7 @@ st.markdown('<div class="main-wrapper">', unsafe_allow_html=True)
 
 # Hero
 st.markdown("""
-    <div class="hero-badge">⚡ Powered by LLaMA 3.1 + RAG</div>
+    <div class="hero-badge">⚡ Powered by GPT-OSS + RAG</div>
     <div class="hero-title">Ask anything about<br><span>your documents.</span></div>
     <div class="hero-subtitle">Upload PDFs and get precise, source-cited answers instantly.<br>
     No hallucinations — every answer is grounded in your documents.</div>

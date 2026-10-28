@@ -1,6 +1,6 @@
 import pdfplumber       # extracts text from PDF files
 import chromadb         # local vector database to store embeddings
-from sentence_transformers import SentenceTransformer  # local embedding model (free, no API needed)
+from embeddings import Embedder  # local all-MiniLM-L6-v2 embeddings via ONNX (free, no API, no PyTorch)
 import os               # for file and folder operations
 import sys              # for reading command line arguments
 
@@ -18,7 +18,7 @@ DOCS_FOLDER = "./docs"          # default folder to look for PDFs when no argume
 # This converts text → numerical vectors so we can do similarity search
 # "all-MiniLM-L6-v2" is small, fast, and free — runs entirely on your machine
 print("Loading embedding model...")
-embedder = SentenceTransformer("all-MiniLM-L6-v2")
+embedder = Embedder()
 
 # Connect to ChromaDB — a local vector database stored in the ./chroma_db folder
 # PersistentClient means data survives after the script closes (saved to disk)

@@ -1,6 +1,10 @@
 # API keys — never push this
 .env
 
+# Web interface — built on a licensed HorizonX template that may not be shared publicly.
+# Deploy it as a Render Secret File named index.html instead (see README).
+web/index.html
+
 # ChromaDB database — too large for GitHub
 chroma_db/
 
@@ -12,6 +16,7 @@ __pycache__/
 
 # Virtual environment
 venv/
+.venv/
 env/
 
 # OS junk

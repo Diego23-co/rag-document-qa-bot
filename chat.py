@@ -1,5 +1,5 @@
 import chromadb                    # local vector database to search stored chunks
-from sentence_transformers import SentenceTransformer  # same embedding model used in ingest.py
+from embeddings import Embedder    # same embedding model used in ingest.py
 from groq import Groq              # Groq API client for LLM inference (free tier)
 from dotenv import load_dotenv     # loads environment variables from .env file
 import os                          # for reading environment variables
@@ -11,14 +11,14 @@ load_dotenv()
 COLLECTION_NAME = "documents"       # must match the collection name used in ingest.py
 TOP_K = 3                           # how many chunks to retrieve per query
                                     # higher = more context, but also more tokens sent to LLM
-MODEL = "llama-3.1-8b-instant"      # free Groq model — fast and capable enough for Q&A
+MODEL = "openai/gpt-oss-20b"        # free Groq model — fast and capable enough for Q&A
 
 # SETUP — load model and connect to database (runs once)
 
 # Load the same embedding model used during ingestion
 # IMPORTANT: must be the same model — different models produce incompatible vectors
 print("Loading embedding model...")
-embedder = SentenceTransformer("all-MiniLM-L6-v2")
+embedder = Embedder()
 
 # Connect to the same ChromaDB database created by ingest.py
 client = chromadb.PersistentClient(path="./chroma_db")
