@@ -5,6 +5,7 @@ from groq import Groq
 from dotenv import load_dotenv
 import pdfplumber
 import os
+import re
 import tempfile
 
 load_dotenv()
@@ -21,7 +22,7 @@ CHUNK_OVERLAP = 50
 # PAGE SETUP
 
 st.set_page_config(
-    page_title="NeuralDocs — RAG Q&A",
+    page_title="NeuralDocs: RAG Q&A",
     page_icon="⚡",
     layout="wide"
 )
@@ -32,7 +33,7 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
-/* ── Force sidebar always open — hide collapse button ── */
+/* ── Force sidebar always open, hide collapse button ── */
 [data-testid="collapsedControl"] { display: none !important; }
 [data-testid="stSidebar"] { min-width: 280px !important; transform: none !important; }
 
@@ -329,7 +330,7 @@ section[data-testid="stBottom"] {
 .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; }
 .empty-state-text { font-family: 'Syne', sans-serif; font-size: 1rem; color: #3a3a5e; }
 
-/* Fix typed text color — input has light bg so text must be dark */
+/* Fix typed text color: input has light bg so text must be dark */
 [data-testid="stChatInputTextArea"] textarea,
 [data-testid="stChatInput"] textarea,
 .stChatInput textarea,
@@ -463,7 +464,7 @@ def ingest_pdf_bytes(file_bytes, filename):
 
 # RAG QUERY
 
-# Rotating thinking messages — makes the bot feel alive while it processes
+# Rotating thinking messages: makes the bot feel alive while it processes
 THINKING_MESSAGES = [
     "🔍 Scanning your documents...",
     "🧠 Thinking this through...",
@@ -472,6 +473,10 @@ THINKING_MESSAGES = [
     "💡 Connecting the dots...",
     "🎯 Zeroing in on the answer...",
 ]
+
+def no_long_dash(text):
+    # the site never shows long dashes, even when the model writes them
+    return re.sub(r"\s*\u2014\s*|\s+\u2013\s+", " - ", text).replace("\u2013", "-")
 
 def ask(question, history):
     qe = embedder.encode([question]).tolist()
@@ -490,20 +495,21 @@ def ask(question, history):
     sources = list(dict.fromkeys(m["source"] for m in results["metadatas"][0]))
     context = "\n\n---\n\n".join(chunks)
 
-    # Humanised personality prompt — warm, direct, and conversational
-    system_prompt = f"""You are NeuralDocs, a smart and friendly AI assistant with a warm, direct personality — like a knowledgeable friend who has read all the documents.
+    # Humanised personality prompt: warm, direct, and conversational
+    system_prompt = f"""You are NeuralDocs, a smart and friendly AI assistant with a warm, direct personality, like a knowledgeable friend who has read all the documents.
 
-CRITICAL RULES — follow these strictly:
-- ALWAYS synthesise and answer in your own words — NEVER copy or paste raw text from the context
+CRITICAL RULES (follow these strictly):
+- ALWAYS synthesise and answer in your own words. NEVER copy or paste raw text from the context
 - Use the document context ONLY as a source of facts to answer with
-- If the answer isn't in the documents, say "Hmm, I couldn't find that one — try rephrasing or switching documents!"
+- If the answer isn't in the documents, say "Hmm, I couldn't find that one. Try rephrasing or switching documents!"
 - If multiple chunks are retrieved, combine them into one coherent answer
-- Use natural conversational language — no stiff corporate phrasing
+- Use natural conversational language, no stiff corporate phrasing
 - Use emojis sparingly (1-2 max per response) to keep things warm
 - Be concise but never cold
+- Never use em dashes or en dashes; use commas, colons or full stops instead
 - After your answer, suggest 1 natural follow-up question prefixed with: "💬 You might also want to ask:"
 
-DOCUMENT CONTEXT (use as reference only — do NOT copy this text directly):
+DOCUMENT CONTEXT (use as reference only; do NOT copy this text directly):
 {context}"""
 
     # Stream the response token by token for the typewriter effect
@@ -560,7 +566,7 @@ with st.sidebar:
                         st.session_state.ingested_files[uf.name] = n
                         st.success(f"✅ {uf.name}")
                     else:
-                        st.warning(f"⚠️ {uf.name} — no text found")
+                        st.warning(f"⚠️ {uf.name}: no text found")
 
     if st.session_state.ingested_files:
         st.markdown('<div class="sidebar-section-title">📚 Knowledge Base</div>', unsafe_allow_html=True)
@@ -598,7 +604,7 @@ with st.sidebar:
 
                     st.rerun()
 
-        # Document focus selector — lets user narrow search to one PDF
+        # Document focus selector: lets user narrow search to one PDF
         st.markdown('<div class="sidebar-section-title">🎯 Focus</div>', unsafe_allow_html=True)
         selected_doc = st.selectbox(
             "Focus on document:",
@@ -621,7 +627,7 @@ st.markdown("""
     <div class="hero-badge">⚡ Powered by GPT-OSS + RAG</div>
     <div class="hero-title">Ask anything about<br><span>your documents.</span></div>
     <div class="hero-subtitle">Upload PDFs and get precise, source-cited answers instantly.<br>
-    No hallucinations — every answer is grounded in your documents.</div>
+    No hallucinations: every answer is grounded in your documents.</div>
 """, unsafe_allow_html=True)
 
 # Stats bar
@@ -728,17 +734,18 @@ if user_input:
             </div>
         """, unsafe_allow_html=True)
 
-        # Stream the answer word by word — typewriter effect
+        # Stream the answer word by word (typewriter effect)
         answer_container = st.empty()
-        full_answer = ""
+        raw_answer = ""
         for chunk in stream:
             delta = chunk.choices[0].delta.content or ""
-            full_answer += delta
+            raw_answer += delta
+            full_answer = no_long_dash(raw_answer)
             answer_container.markdown(f"""
                 <div class="msg-text" style="padding: 0 1.3rem 0.5rem;">{full_answer}▌</div>
             """, unsafe_allow_html=True)
 
-        # Final render — remove cursor, show sources
+        # Final render: remove cursor, show sources
         answer_container.markdown(f"""
             <div class="msg-text" style="padding: 0 1.3rem 1rem;">{full_answer}
                 <div class="sources-row" style="margin-top:0.8rem;">{chips}</div>

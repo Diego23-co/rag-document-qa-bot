@@ -38,7 +38,7 @@ REASONING = {"fast": "low", "think": "medium"}   # gpt-oss only: how long it thi
 TOP_K = {"fast": 4, "think": 6}
 FOLLOWUP_MARK = "<<<FOLLOWUPS>>>"   # the model writes follow-up questions after this line
 
-# SETUP — loaded once when the server starts
+# SETUP: loaded once when the server starts
 
 embedder = Embedder()                # all-MiniLM-L6-v2 via ONNX, same vectors as ingest.py/app.py
 collection = chromadb.PersistentClient(path=DB_PATH).get_or_create_collection(COLLECTION_NAME)
@@ -115,7 +115,7 @@ def list_documents() -> list[dict]:
             for name, n in sorted(counts.items(), key=lambda kv: kv[0].lower())]
 
 
-# DEMO SAMPLES — PDFs in ./docs are indexed on startup and cannot be deleted from the web UI
+# DEMO SAMPLES: PDFs in ./docs are indexed on startup and cannot be deleted from the web UI
 
 SAMPLES_DIR = os.getenv("SAMPLES_DIR", "./docs")
 
@@ -181,6 +181,7 @@ How to answer:
 - Cite excerpts inline with their numbers in square brackets, like [1] or [2][3], right after the claim they support.
 - If the excerpts do not contain the answer, say so in one sentence and suggest a better question. Never invent facts.
 - Refer to "your documents", never to "excerpts" or "context".
+- Never use em dashes or en dashes. Use commas, colons or full stops instead.
 - Finish with a line containing only {mark} followed by two short follow-up questions the documents can answer, one per line.
 
 EXCERPTS:
@@ -222,8 +223,13 @@ def _split_stream(deltas):
     return tail
 
 
+def no_long_dash(text: str) -> str:
+    """The site never shows long dashes: an em dash becomes " - ", an en dash a hyphen (" - " between spaces)."""
+    return re.sub(r"\s*\u2014\s*|\s+\u2013\s+", " - ", text).replace("\u2013", "-")
+
+
 def _parse_followups(tail: str) -> list[str]:
-    lines = (re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", line).strip() for line in tail.splitlines())
+    lines = (re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", no_long_dash(line)).strip() for line in tail.splitlines())
     return [line for line in lines if len(line) > 3][:3]
 
 
@@ -242,7 +248,7 @@ def answer_stream(question: str, history: list[dict], source: str | None, mode: 
         return
 
     yield {"type": "sources", "sources": [
-        {"n": p["n"], "source": p["source"], "page": p["page"], "snippet": p["text"][:420]} for p in passages
+        {"n": p["n"], "source": p["source"], "page": p["page"], "snippet": no_long_dash(p["text"][:420])} for p in passages
     ]}
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT.format(mark=FOLLOWUP_MARK, excerpts=_excerpts(passages))}]

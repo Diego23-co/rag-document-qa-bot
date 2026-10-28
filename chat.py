@@ -11,12 +11,12 @@ load_dotenv()
 COLLECTION_NAME = "documents"       # must match the collection name used in ingest.py
 TOP_K = 3                           # how many chunks to retrieve per query
                                     # higher = more context, but also more tokens sent to LLM
-MODEL = "openai/gpt-oss-20b"        # free Groq model — fast and capable enough for Q&A
+MODEL = "openai/gpt-oss-20b"        # free Groq model, fast and capable enough for Q&A
 
-# SETUP — load model and connect to database (runs once)
+# SETUP: load model and connect to database (runs once)
 
 # Load the same embedding model used during ingestion
-# IMPORTANT: must be the same model — different models produce incompatible vectors
+# IMPORTANT: must be the same model, because different models produce incompatible vectors
 print("Loading embedding model...")
 embedder = Embedder()
 
@@ -34,7 +34,7 @@ groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 conversation_history = []
 
 
-# STEP 1 — RETRIEVE: find the most relevant chunks for a query
+# STEP 1, RETRIEVE: find the most relevant chunks for a query
 
 def retrieve_context(query: str, top_k: int = TOP_K) -> tuple[str, list[str]]:
     """
@@ -68,7 +68,7 @@ def retrieve_context(query: str, top_k: int = TOP_K) -> tuple[str, list[str]]:
     return context, sources
 
 
-# STEP 2 — ANSWER: send context + question to the LLM
+# STEP 2, ANSWER: send context + question to the LLM
 
 def ask(user_question: str) -> tuple[str, list[str]]:
     """

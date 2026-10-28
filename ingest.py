@@ -4,7 +4,7 @@ from embeddings import Embedder  # local all-MiniLM-L6-v2 embeddings via ONNX (f
 import os               # for file and folder operations
 import sys              # for reading command line arguments
 
-# CONFIG — tweak these values to change behaviour
+# CONFIG: tweak these values to change behaviour
 
 CHUNK_SIZE = 500        # how many characters per chunk (bigger = more context, less precise)
 CHUNK_OVERLAP = 50      # how many characters overlap between chunks (helps preserve context at boundaries)
@@ -12,15 +12,15 @@ COLLECTION_NAME = "documents"   # name of the ChromaDB collection (like a table 
 DOCS_FOLDER = "./docs"          # default folder to look for PDFs when no argument is passed
 
 
-# SETUP — load model and connect to database (runs once)
+# SETUP: load model and connect to database (runs once)
 
 # Load the local sentence embedding model
 # This converts text → numerical vectors so we can do similarity search
-# "all-MiniLM-L6-v2" is small, fast, and free — runs entirely on your machine
+# "all-MiniLM-L6-v2" is small, fast, and free, and runs entirely on your machine
 print("Loading embedding model...")
 embedder = Embedder()
 
-# Connect to ChromaDB — a local vector database stored in the ./chroma_db folder
+# Connect to ChromaDB, a local vector database stored in the ./chroma_db folder
 # PersistentClient means data survives after the script closes (saved to disk)
 client = chromadb.PersistentClient(path="./chroma_db")
 
@@ -29,7 +29,7 @@ client = chromadb.PersistentClient(path="./chroma_db")
 collection = client.get_or_create_collection(COLLECTION_NAME)
 
 
-# STEP 1 — EXTRACT: pull raw text out of a PDF
+# STEP 1, EXTRACT: pull raw text out of a PDF
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """
@@ -45,13 +45,13 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     return text
 
 
-# STEP 2 — CHUNK: split text into smaller overlapping pieces
+# STEP 2, CHUNK: split text into smaller overlapping pieces
 
 def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
     """
     Splits a long text into smaller chunks with slight overlap.
 
-    Why chunk? LLMs have a context limit — we can't send an entire document.
+    Why chunk? LLMs have a context limit, so we can't send an entire document.
     Why overlap? So sentences at chunk boundaries don't lose their context.
 
     Example with chunk_size=10, overlap=3:
@@ -68,7 +68,7 @@ def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVE
     return chunks
 
 
-# CORE FUNCTION — ingest a single PDF file
+# CORE FUNCTION: ingest a single PDF file
 
 def ingest_pdf(pdf_path: str):
     """
@@ -83,7 +83,7 @@ def ingest_pdf(pdf_path: str):
 
     # Guard: skip if no text was found (common with scanned/image-based PDFs)
     if not text.strip():
-        print(f"     ⚠️  No text found — skipping (may be a scanned image PDF)")
+        print(f"     ⚠️  No text found, skipping (may be a scanned image PDF)")
         return
 
     print(f"     Extracted {len(text)} characters")
@@ -105,7 +105,7 @@ def ingest_pdf(pdf_path: str):
         print(f"     ♻️  Replaced previous version")
 
     # --- Step 4: Store ---
-    # Each chunk needs a unique ID — we use filename + chunk index
+    # Each chunk needs a unique ID, so we use filename + chunk index
     ids = [f"{filename}_chunk_{i}" for i in range(len(chunks))]
 
     collection.add(
@@ -120,7 +120,7 @@ def ingest_pdf(pdf_path: str):
     print(f"     ✅ Stored {len(chunks)} chunks")
 
 
-# BATCH FUNCTION — ingest all PDFs in a folder
+# BATCH FUNCTION: ingest all PDFs in a folder
 
 def ingest_folder(folder_path: str):
     """
@@ -151,7 +151,7 @@ def ingest_folder(folder_path: str):
             ingest_pdf(os.path.join(folder_path, pdf_file))    # build full path e.g. ./docs/resume.pdf
             success += 1
         except Exception as e:
-            print(f"     ❌ Error ingesting {pdf_file}: {e}")  # don't crash — just skip bad files
+            print(f"     ❌ Error ingesting {pdf_file}: {e}")  # don't crash, just skip bad files
 
     # Print a final summary
     total_chunks = collection.count()   # total chunks across ALL documents in ChromaDB
@@ -162,7 +162,7 @@ def ingest_folder(folder_path: str):
     print(f"\nYou can now run: python chat.py")
 
 
-# UTILITY — list all documents currently stored in ChromaDB
+# UTILITY: list all documents currently stored in ChromaDB
 
 def list_ingested():
     """
@@ -185,7 +185,7 @@ def list_ingested():
         print(f"   • {source} ({count} chunks)")
 
 
-# ENTRY POINT — handles command line arguments
+# ENTRY POINT: handles command line arguments
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
