@@ -2,7 +2,7 @@
 
 > An AI-powered document intelligence system that lets you upload PDFs and have natural conversations about their contents, with zero hallucinations and full source citations.
 
-**Live demo:** _link coming soon_. The free server sleeps when idle, so the first visit can take up to a minute to wake up.
+**Live demo:** https://rag-document-qa-bot-thkz.onrender.com/#prompt. The free server sleeps when idle, so the first visit can take up to a minute to wake up.
 
 ![NeuralDocs home screen with the document library and live ASCII jellyfish background](screenshots/home.png)
 
